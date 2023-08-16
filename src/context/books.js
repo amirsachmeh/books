@@ -1,16 +1,67 @@
 import { createContext,useState } from "react";
+import axios from "axios";
 
 const BooksContext = createContext();
 
 function Provider({children}) {
-    const [count,setCount] = useState(5);
 
-    const valueToShare = {
-        count ,
-        incrementCount : () => {
-            setCount( count + 1);
-        },
+    const [books,setBooks] = useState([]);
+
+    const fetchBooks = async ()=>{
+      const response = await axios.get('http://127.0.0.1:3001/books');
+
+      setBooks(response.data);
+    };  
+
+    const editBookById = async (id,newTitle) =>{
+        const response = await axios.put(`http://127.0.0.1:3001/books/${id}`,{
+          title: newTitle
+        });
+  
+        console.log(response)
+         const updatedBooks = books.map((book)=>{
+          if (book.id === id){
+              return {...book,...response.data};
+          }
+  
+          return book ;
+         });
+         setBooks(updatedBooks);        
+  
+      };
+  
+      const deletBookById = async (id)=>{
+        await axios.delete(`http://127.0.0.1:3001/books/${id}`)
+        const updatedBooks =books.filter((book)=>{
+          return book.id !== id
+        });
+        setBooks(updatedBooks);        
+  
+      };
+  
+  
+      const createBooks = async (title)=> {
+  
+         const response = await axios.post('http://127.0.0.1:3001/books',{
+              title
+          });
+          
+          const updatedBooks = [
+              ...books,
+           response.data
+          ];
+          setBooks(updatedBooks);        
+      };
+  
+    const valueToShare =  {
+       books,
+       deletBookById,
+       editBookById,
+       createBooks,
+       fetchBooks
     };
+
+
 
     return (  <BooksContext.Provider value={valueToShare}>
         {children}
@@ -19,3 +70,4 @@ function Provider({children}) {
 }
 export {Provider}
 export default BooksContext;
+
